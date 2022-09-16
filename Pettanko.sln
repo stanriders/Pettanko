@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31912.275
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Pettanko", "Pettanko\Pettanko.csproj", "{A5154878-72F7-4E36-9FB7-25B5C9E2B884}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Pettanko.Tests", "Pettanko.Tests\Pettanko.Tests.csproj", "{1D2CD22C-6716-4707-8A6E-007F7D1A9FB4}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{A5154878-72F7-4E36-9FB7-25B5C9E2B884}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A5154878-72F7-4E36-9FB7-25B5C9E2B884}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A5154878-72F7-4E36-9FB7-25B5C9E2B884}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A5154878-72F7-4E36-9FB7-25B5C9E2B884}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1D2CD22C-6716-4707-8A6E-007F7D1A9FB4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1D2CD22C-6716-4707-8A6E-007F7D1A9FB4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1D2CD22C-6716-4707-8A6E-007F7D1A9FB4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1D2CD22C-6716-4707-8A6E-007F7D1A9FB4}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {73ADA6B4-4B6C-439B-89F6-49B0BC85CE5B}
+	EndGlobalSection
+EndGlobal
