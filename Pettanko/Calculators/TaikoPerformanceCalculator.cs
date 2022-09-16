@@ -1,4 +1,6 @@
-﻿using System;
+﻿// Copyright (c) ppy Pty Ltd <contact@ppy.sh>. Licensed under the MIT Licence.
+
+using System;
 using System.Linq;
 using Pettanko.Difficulty;
 using Pettanko.Mods;
