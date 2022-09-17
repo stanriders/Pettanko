@@ -10,11 +10,11 @@
 		<Description>Stripped down version of osu! performance calculators</Description>
 		<PackageId>StanR.Pettanko</PackageId>
 		<IsPackable>true</IsPackable>
-		<PackageTags>osu! osu pp</PackageTags>
+		<PackageTags>osu! osu pp taiko ctb mania</PackageTags>
 		<RepositoryUrl>https://github.com/stanriders/Pettanko</RepositoryUrl>
 		<RepositoryType>Git</RepositoryType>
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-		<Version>1.0.0</Version>
+		<Version>1.0.1</Version>
 	</PropertyGroup>
 
 </Project>
