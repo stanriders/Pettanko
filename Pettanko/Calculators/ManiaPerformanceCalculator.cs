@@ -34,13 +34,14 @@ namespace Pettanko.Calculators
             countMeh = scoreData.Statistics.Count50;
             countMiss = scoreData.Statistics.CountMiss;
 
-            // TODO:
-            if (scoreData.Mods.Length > 0)
+            // CONSIDER: add score multipliers to mods for mania to calc?
+            if (scoreData.Mods.Length > 0 && maniaAttributes.ScoreMultipler is null)
                 throw new NotImplementedException("Mania mods are not implemented yet!");
 
             //IEnumerable<Mod> scoreIncreaseMods = Ruleset.GetModsFor(ModType.DifficultyIncrease);
 
-            double scoreMultiplier = 1.0;
+            double scoreMultiplier = Math.Max(1.0, maniaAttributes.ScoreMultipler ?? 1.0);
+
             //foreach (var m in scoreData.Mods.Where(m => !scoreIncreaseMods.Contains(m)))
             //    scoreMultiplier *= m.ScoreMultiplier;
             
