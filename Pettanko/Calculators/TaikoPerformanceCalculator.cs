@@ -22,9 +22,8 @@ namespace Pettanko.Calculators
             countGreat = scoreData.Statistics.Count300;
             countOk = scoreData.Statistics.Count100;
             countMeh = scoreData.Statistics.Count50;
-            countMiss = scoreData.Statistics.Count50;
+            countMiss = scoreData.Statistics.CountMiss;
             
-
             // Custom multipliers for NoFail and SpunOut.
             double multiplier = 1.1; // This is being adjusted to keep the final pp value scaled around what it used to be when changing things
 
