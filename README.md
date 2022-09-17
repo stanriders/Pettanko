@@ -1,11 +1,11 @@
 # Pettanko - stripped down version of osu! performance calculators.
 
-Pettanko is because you can't name something related to pp without using some kind of japanese boobs word.
+Pettanko is because you can't name something related to pp without using some kind of japanese boobs word.  
 And also because it's *slim*.
 
 ## How to use
 
-1) Add it to your project using [https://www.nuget.org/packages/StanR.Pettanko](Nuget)
+1) Add it to your project using [Nuget](https://www.nuget.org/packages/StanR.Pettanko)
 2) Get beatmap difficulty attributes [from osu! API v2](https://osu.ppy.sh/docs/index.html#get-beatmap-attributes)
 3) Call `Pettanko.Calculate(DifficultyAttributes difficultyAttributes, Score scoreData)`
 
