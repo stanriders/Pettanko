@@ -14,6 +14,9 @@ namespace Pettanko.Calculators
         private int countOk;
         private int countMeh;
         private int countMiss;
+        private double? estimatedUnstableRate;
+
+        private double effectiveMissCount;
 
         public PerformanceAttributes Calculate(DifficultyAttributes difficultyAttributes, Score scoreData)
         {
@@ -23,18 +26,25 @@ namespace Pettanko.Calculators
             countOk = scoreData.Statistics.Count100;
             countMeh = scoreData.Statistics.Count50;
             countMiss = scoreData.Statistics.CountMiss;
-            
-            // Custom multipliers for NoFail and SpunOut.
-            double multiplier = 1.1; // This is being adjusted to keep the final pp value scaled around what it used to be when changing things
+            estimatedUnstableRate = computeDeviationUpperBound(taikoAttributes) * 10;
 
-            if (scoreData.Mods.Any(m => m is ModNoFail))
-                multiplier *= 0.90;
+            // The effectiveMissCount is calculated by gaining a ratio for totalSuccessfulHits and increasing the miss penalty for shorter object counts lower than 1000.
+            if (totalSuccessfulHits > 0)
+                effectiveMissCount = Math.Max(1.0, 1000.0 / totalSuccessfulHits) * countMiss;
+
+            // TODO: The detection of rulesets is temporary until the leftover old skills have been reworked.
+            bool isConvert = scoreData.RulesetId != 1;
+
+            double multiplier = 1.13;
 
             if (scoreData.Mods.Any(m => m is ModHidden))
-                multiplier *= 1.10;
+                multiplier *= 1.075;
 
-            double difficultyValue = computeDifficultyValue(scoreData, taikoAttributes);
-            double accuracyValue = computeAccuracyValue(scoreData, taikoAttributes);
+            if (scoreData.Mods.Any(m => m is ModEasy))
+                multiplier *= 0.975;
+
+            double difficultyValue = computeDifficultyValue(scoreData, taikoAttributes, isConvert);
+            double accuracyValue = computeAccuracyValue(scoreData, taikoAttributes, isConvert);
             double totalValue =
                 Math.Pow(
                     Math.Pow(difficultyValue, 1.1) +
@@ -45,45 +55,116 @@ namespace Pettanko.Calculators
             {
                 Difficulty = difficultyValue,
                 Accuracy = accuracyValue,
+                EffectiveMissCount = effectiveMissCount,
+                EstimatedUnstableRate = estimatedUnstableRate,
                 Total = totalValue
             };
         }
 
-        private double computeDifficultyValue(Score score, TaikoDifficultyAttributes attributes)
+        private double computeDifficultyValue(Score score, TaikoDifficultyAttributes attributes, bool isConvert)
         {
-            double strainValue = Math.Pow(5.0 * Math.Max(1.0, attributes.StarRating / 0.0075) - 4.0, 2.0) / 100000.0;
+            double difficultyValue = Math.Pow(5 * Math.Max(1.0, attributes.StarRating / 0.115) - 4.0, 2.25) / 1150.0;
 
-            // Longer maps are worth more
             double lengthBonus = 1 + 0.1 * Math.Min(1.0, totalHits / 1500.0);
-            strainValue *= lengthBonus;
+            difficultyValue *= lengthBonus;
 
-            // Penalize misses exponentially. This mainly fixes tag4 maps and the likes until a per-hitobject solution is available
-            strainValue *= Math.Pow(0.985, countMiss);
+            difficultyValue *= Math.Pow(0.986, effectiveMissCount);
 
-            if (score.Mods.Any(m => m is ModHidden))
-                strainValue *= 1.025;
+            if (score.Mods.Any(m => m is ModEasy))
+                difficultyValue *= 0.985;
+
+            if (score.Mods.Any(m => m is ModHidden) && !isConvert)
+                difficultyValue *= 1.025;
+
+            if (score.Mods.Any(m => m is ModHardRock))
+                difficultyValue *= 1.10;
 
             if (score.Mods.Any(m => m is ModFlashlight))
-                // Apply length bonus again if flashlight is on simply because it becomes a lot harder on longer maps.
-                strainValue *= 1.05 * lengthBonus;
+                difficultyValue *= 1.050 * lengthBonus;
 
-            // Scale the speed value with accuracy _slightly_
-            return strainValue * score.Accuracy;
-        }
-
-        private double computeAccuracyValue(Score score, TaikoDifficultyAttributes attributes)
-        {
-            if (attributes.GreatHitWindow <= 0)
+            if (estimatedUnstableRate == null)
                 return 0;
 
-            // Lots of arbitrary values from testing.
-            // Considering to use derivation from perfect accuracy in a probabilistic manner - assume normal distribution
-            double accValue = Math.Pow(150.0 / attributes.GreatHitWindow, 1.1) * Math.Pow(score.Accuracy, 15) * 22.0;
+            return difficultyValue * Math.Pow(SpecialFunctions.Erf(400 / (Math.Sqrt(2) * estimatedUnstableRate.Value)), 2.0);
+        }
 
-            // Bonus for many hitcircles - it's harder to keep good accuracy up for longer
-            return accValue * Math.Min(1.15, Math.Pow(totalHits / 1500.0, 0.3));
+        private double computeAccuracyValue(Score score, TaikoDifficultyAttributes attributes, bool isConvert)
+        {
+            if (attributes.GreatHitWindow <= 0 || estimatedUnstableRate == null)
+                return 0;
+
+            double accuracyValue = Math.Pow(70 / estimatedUnstableRate.Value, 1.1) * Math.Pow(attributes.StarRating, 0.4) * 100.0;
+
+            double lengthBonus = Math.Min(1.15, Math.Pow(totalHits / 1500.0, 0.3));
+
+            // Slight HDFL Bonus for accuracy. A clamp is used to prevent against negative values.
+            if (score.Mods.Any(m => m is ModFlashlight) && score.Mods.Any(m => m is ModHidden) && !isConvert)
+                accuracyValue *= Math.Max(1.0, 1.05 * lengthBonus);
+
+            return accuracyValue;
+        }
+
+        /// <summary>
+        /// Computes an upper bound on the player's tap deviation based on the OD, number of circles and sliders,
+        /// and the hit judgements, assuming the player's mean hit error is 0. The estimation is consistent in that
+        /// two SS scores on the same map with the same settings will always return the same deviation.
+        /// </summary>
+        private double? computeDeviationUpperBound(TaikoDifficultyAttributes attributes)
+        {
+            if (totalSuccessfulHits == 0 || attributes.GreatHitWindow <= 0)
+                return null;
+
+            double h300 = attributes.GreatHitWindow;
+            double h100 = attributes.OkHitWindow;
+
+            const double z = 2.32634787404; // 99% critical value for the normal distribution (one-tailed).
+
+            // The upper bound on deviation, calculated with the ratio of 300s to objects, and the great hit window.
+            double? calcDeviationGreatWindow()
+            {
+                if (countGreat == 0) return null;
+
+                double n = totalHits;
+
+                // Proportion of greats hit.
+                double p = countGreat / n;
+
+                // We can be 99% confident that p is at least this value.
+                double pLowerBound = (n * p + z * z / 2) / (n + z * z) - z / (n + z * z) * Math.Sqrt(n * p * (1 - p) + z * z / 4);
+
+                // We can be 99% confident that the deviation is not higher than:
+                return h300 / (Math.Sqrt(2) * SpecialFunctions.ErfInv(pLowerBound));
+            }
+
+            // The upper bound on deviation, calculated with the ratio of 300s + 100s to objects, and the good hit window.
+            // This will return a lower value than the first method when the number of 100s is high, but the miss count is low.
+            double? calcDeviationGoodWindow()
+            {
+                if (totalSuccessfulHits == 0) return null;
+
+                double n = totalHits;
+
+                // Proportion of greats + goods hit.
+                double p = totalSuccessfulHits / n;
+
+                // We can be 99% confident that p is at least this value.
+                double pLowerBound = (n * p + z * z / 2) / (n + z * z) - z / (n + z * z) * Math.Sqrt(n * p * (1 - p) + z * z / 4);
+
+                // We can be 99% confident that the deviation is not higher than:
+                return h100 / (Math.Sqrt(2) * SpecialFunctions.ErfInv(pLowerBound));
+            }
+
+            double? deviationGreatWindow = calcDeviationGreatWindow();
+            double? deviationGoodWindow = calcDeviationGoodWindow();
+
+            if (deviationGreatWindow is null)
+                return deviationGoodWindow;
+
+            return Math.Min(deviationGreatWindow.Value, deviationGoodWindow!.Value);
         }
 
         private int totalHits => countGreat + countOk + countMeh + countMiss;
+
+        private int totalSuccessfulHits => countGreat + countOk + countMeh;
     }
 }
