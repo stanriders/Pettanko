@@ -10,21 +10,21 @@ namespace Pettanko.Calculators
 {
     public class CatchPerformanceCalculator : IPerformanceCalculator
     {
-        private int fruitsHit;
-        private int ticksHit;
-        private int tinyTicksHit;
-        private int tinyTicksMissed;
-        private int misses;
+        private int num300;
+        private int num100;
+        private int num50;
+        private int numKatu;
+        private int numMiss;
 
         public PerformanceAttributes Calculate(DifficultyAttributes difficultyAttributes, Score scoreData)
         {
             var catchAttributes = (CatchDifficultyAttributes)difficultyAttributes;
 
-            fruitsHit = scoreData.Statistics.Count300;
-            ticksHit = scoreData.Statistics.Count100;
-            tinyTicksHit = scoreData.Statistics.Count50;
-            tinyTicksMissed = scoreData.Statistics.CountKatu;
-            misses = scoreData.Statistics.CountMiss;
+            num300 = scoreData.Statistics.Count300;
+            num100 = scoreData.Statistics.Count100;
+            num50 = scoreData.Statistics.Count50;
+            numKatu = scoreData.Statistics.CountKatu;
+            numMiss = scoreData.Statistics.CountMiss;
 
             // We are heavily relying on aim in catch the beat
             double value = Math.Pow(5.0 * Math.Max(1.0, catchAttributes.StarRating / 0.0049) - 4.0, 2.0) / 100000.0;
@@ -37,7 +37,7 @@ namespace Pettanko.Calculators
                 (numTotalHits > 2500 ? Math.Log10(numTotalHits / 2500.0) * 0.475 : 0.0);
             value *= lengthBonus;
 
-            value *= Math.Pow(0.97, misses);
+            value *= Math.Pow(0.97, numMiss);
 
             // Combo scaling
             if (catchAttributes.MaxCombo > 0)
@@ -69,7 +69,7 @@ namespace Pettanko.Calculators
             value *= Math.Pow(accuracy(), 5.5);
 
             if (scoreData.Mods.Any(m => m is ModNoFail))
-                value *= 0.90;
+                value *= Math.Max(0.90, 1.0 - 0.02 * numMiss);
 
             return new CatchPerformanceAttributes
             {
@@ -77,8 +77,8 @@ namespace Pettanko.Calculators
             };
         }
         private double accuracy() => totalHits() == 0 ? 0 : Extensions.Clamp((double)totalSuccessfulHits() / totalHits(), 0, 1);
-        private int totalHits() => tinyTicksHit + ticksHit + fruitsHit + misses + tinyTicksMissed;
-        private int totalSuccessfulHits() => tinyTicksHit + ticksHit + fruitsHit;
-        private int totalComboHits() => misses + ticksHit + fruitsHit;
+        private int totalHits() => num50 + num100 + num300 + numMiss + numKatu;
+        private int totalSuccessfulHits() => num50 + num100 + num300;
+        private int totalComboHits() => numMiss + num100 + num300;
     }
 }

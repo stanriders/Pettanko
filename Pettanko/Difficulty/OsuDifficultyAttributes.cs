@@ -15,6 +15,12 @@ namespace Pettanko.Difficulty
         public double SpeedDifficulty { get; set; }
 
         /// <summary>
+        /// The number of clickable objects weighted by difficulty.
+        /// Related to <see cref="SpeedDifficulty"/>
+        /// </summary>
+        public double SpeedNoteCount { get; set; }
+
+        /// <summary>
         /// The difficulty corresponding to the flashlight skill.
         /// </summary>
         public double FlashlightDifficulty { get; set; }
@@ -25,6 +31,10 @@ namespace Pettanko.Difficulty
         /// A value closer to 0.0 indicates most of <see cref="AimDifficulty"/> is contributed by sliders.
         /// </summary>
         public double SliderFactor { get; set; }
+        
+        public double AimDifficultStrainCount { get; set; }
+        
+        public double SpeedDifficultStrainCount { get; set; }
 
         /// <summary>
         /// The perceived approach rate inclusive of rate-adjusting mods (DT/HT/etc).
